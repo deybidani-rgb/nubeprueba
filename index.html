@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Matrix 2025 – Estadísticas y calculadoras</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --card: #1f2937;
+      --border: #334155;
+      --link: #60a5fa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial;
+      background: linear-gradient(180deg, #0b1020 0%, var(--bg) 40%, #0b1020 100%);
+      color: var(--text);
+    }
+    header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(17,24,39,0.6); backdrop-filter: blur(6px);
+      position: sticky; top: 0; z-index: 10;
+    }
+    h1 { margin: 0; font-size: 18px; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 980px) { .grid { grid-template-columns: 1.2fr 1fr; } }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .section-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .controls { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 720px) { .controls { grid-template-columns: 1fr 1fr 1fr; } }
+    label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: inline-block; }
+    select, input[type="number"] {
+      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--card); color: var(--text);
+    }
+    button {
+      padding: 10px 12px; border-radius: 10px; border: 0; cursor: pointer; font-weight: 600;
+      background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); color: #042f1a;
+    }
+    button.secondary { background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%); color: #0b1730; }
+    button.warn { background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); color: #1b1002; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .metric { display: grid; grid-template-columns: 1.4fr 0.8fr; gap: 8px; padding: 8px 0; border-bottom: 1px dashed var(--border); }
+    .metric:last-child { border-bottom: none; }
+    .metric-label { color: var(--muted); font-size: 13px; }
+    .metric-value { text-align: right; font-weight: 700; }
+    .subgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .links { display: grid; grid-template-columns: 1fr; gap: 6px; }
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .small { font-size: 12px; color: var(--muted); }
+    .error { color: var(--danger); font-size: 13px; margin-top: 6px; }
+    .success { color: var(--accent); font-size: 13px; margin-top: 6px; }
+    .table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .table th, .table td { border: 1px solid var(--border); padding: 8px; }
+    .table th { background: #0d1224; font-weight: 700; }
+    .pill { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border); background: #0d1224; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Matrix 2025 – Ligas, estadísticas y calculadoras</h1>
+  </header>
+
+  <div class="container">
+
+    <!-- Selección de liga y equipos -->
+    <div class="panel">
+      <div class="section-title">Selector de liga y equipos</div>
+      <div class="controls">
+        <div>
+          <label for="leagueSel">Liga</label>
+          <select id="leagueSel"></select>
+        </div>
+        <div>
+          <label for="homeSel">Equipo local</label>
+          <select id="homeSel"></select>
+        </div>
+        <div>
+          <label for="awaySel">Equipo visitante</label>
+          <select id="awaySel"></select>
+        </div>
+      </div>
+      <div style="margin-top:12px; display:flex; gap:12px;">
+        <button id="loadBtn" disabled>Cargar partido</button>
+        <button id="swapBtn" class="secondary">Intercambiar</button>
+      </div>
+      <div id="msg" class="error" style="display:none;"></div>
+      <p class="small">Los datos numéricos cargados provienen del archivo; los enlaces te llevan a SoccerSTATS y otras fuentes.</p>
+    </div>
+
+    <div class="grid">
+
+      <!-- Partido y métricas -->
+      <div class="panel">
+        <div class="section-title">Ficha del partido</div>
+        <div class="row">
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="font-weight:700;" id="homeName">Local</div>
+              <span class="pill" id="leagueName">Liga</span>
+            </div>
+            <div id="homeMetrics">
+              <!-- métricas local -->
+            </div>
+          </div>
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="font-weight:700;" id="awayName">Visitante</div>
+              <span class="pill" id="leagueName2">Liga</span>
+            </div>
+            <div id="awayMetrics">
+              <!-- métricas visitante -->
+            </div>
+          </div>
+        </div>
+
+        <div class="subgrid" style="margin-top:12px;">
+          <div class="card">
+            <div class="section-title">Corners (líneas)</div>
+            <div class="metric"><div class="metric-label">Over 8.5</div><div class="metric-value" id="corn85">–</div></div>
+            <div class="metric"><div class="metric-label">Over 9.5</div><div class="metric-value" id="corn95">–</div></div>
+            <div class="metric"><div class="metric-label">Over 10.5</div><div class="metric-value" id="corn105">–</div></div>
+            <div class="metric"><div class="metric-label">Corners local</div><div class="metric-value" id="cornL">–</div></div>
+            <div class="metric"><div class="metric-label">Corners visitante</div><div class="metric-value" id="cornV">–</div></div>
+          </div>
+          <div class="card">
+            <div class="section-title">Goles esperados y over/under</div>
+            <div class="metric"><div class="metric-label">Goles esperados local</div><div class="metric-value" id="xgL">–</div></div>
+            <div class="metric"><div class="metric-label">Goles esperados visitante</div><div class="metric-value" id="xgV">–</div></div>
+            <div class="metric"><div class="metric-label">Over 0.5</div><div class="metric-value" id="ov05">–</div></div>
+            <div class="metric"><div class="metric-label">Over 1.5</div><div class="metric-value" id="ov15">–</div></div>
+            <div class="metric"><div class="metric-label">Over 2.5</div><div class="metric-value" id="ov25">–</div></div>
+            <div class="metric"><div class="metric-label">Over 3.5</div><div class="metric-value" id="ov35">–</div></div>
+            <div class="metric"><div class="metric-label">Under 0.5</div><div class="metric-value" id="un05">–</div></div>
+            <div class="metric"><div class="metric-label">Under 1.5</div><div class="metric-value" id="un15">–</div></div>
+            <div class="metric"><div class="metric-label">Under 2.5</div><div class="metric-value" id="un25">–</div></div>
+            <div class="metric"><div class="metric-label">Under 3.5</div><div class="metric-value" id="un35">–</div></div>
+            <div class="metric"><div class="metric-label">Ambos marcan (BTTS)</div><div class="metric-value" id="btts">–</div></div>
+          </div>
+        </div>
+
+        <div class="subgrid" style="margin-top:12px;">
+          <div class="card">
+            <div class="section-title">1X2 y doble oportunidad</div>
+            <div class="metric"><div class="metric-label">Probabilidad victoria local</div><div class="metric-value" id="pWinL">–</div></div>
+            <div class="metric"><div class="metric-label">Probabilidad empate</div><div class="metric-value" id="pDraw">–</div></div>
+            <div class="metric"><div class="metric-label">Probabilidad victoria visitante</div><div class="metric-value" id="pWinV">–</div></div>
+            <div class="metric"><div class="metric-label">Doble oportunidad 1X</div><div class="metric-value" id="p1X">–</div></div>
+            <div class="metric"><div class="metric-label">Cuotas (referencia)</div><div class="metric-value" id="oddsRef">–</div></div>
+          </div>
+          <div class="card">
+            <div class="section-title">Descanso / final y tiempos</div>
+            <div class="metric"><div class="metric-label">Local half time</div><div class="metric-value" id="htL">–</div></div>
+            <div class="metric"><div class="metric-label">Visitante half time</div><div class="metric-value" id="htV">–</div></div>
+            <div class="metric"><div class="metric-label">Goles descanso</div><div class="metric-value" id="gDesc">–</div></div>
+            <div class="metric"><div class="metric-label">Estadística 1er tiempo</div><div class="metric-value" id="firstHalfStat">–</div></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <div class="section-title">Tabla de resultados (del archivo)</div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Métrica</th><th>Local</th><th>Visitante</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>GF L (prom. goles a favor local)</td><td id="gfL">–</td><td class="small">del bloque</td></tr>
+              <tr><td>GF V (prom. goles a favor visitante)</td><td class="small">del bloque</td><td id="gfV">–</td></tr>
+              <tr><td>GC L (prom. goles en contra local)</td><td id="gcL">–</td><td class="small">del bloque</td></tr>
+              <tr><td>GC V (prom. goles en contra visitante)</td><td class="small">del bloque</td><td id="gcV">–</td></tr>
+              <tr><td>Prom. liga L</td><td id="plL">–</td><td class="small">ref</td></tr>
+              <tr><td>Prom. liga V</td><td id="plV">–</td><td class="small">ref</td></tr>
+            </tbody>
+          </table>
+          <p class="small">Valores numéricos tomados del bloque “Copia de TABLA RESULTADOS” del archivo.</p>
+        </div>
+      </div>
+
+      <!-- Calculadoras e índices -->
+      <div class="panel">
+        <div class="section-title">Calculadora de inversión</div>
+        <div class="card" style="margin-bottom:12px;">
+          <div class="row">
+            <div>
+              <label>Cuánto quieres ganar (meta)</label>
+              <input type="number" id="metaGanar" value="100" min="0" />
+            </div>
+            <div>
+              <label>Cuota selección A</label>
+              <input type="number" id="cuotaA" value="3.0" step="0.01" />
+            </div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div>
+              <label>Cuota selección B</label>
+              <input type="number" id="cuotaB" value="2.0" step="0.01" />
+            </div>
+            <div>
+              <label>Estimado (%) selección A</label>
+              <input type="number" id="estimadoA" value="33.33" step="0.01" />
+            </div>
+          </div>
+          <div style="margin-top:8px; display:flex; gap:8px;">
+            <button class="warn" id="calcInvBtn">Calcular inversión</button>
+            <span class="small">Inspirado en “C. INVERSION” del archivo.</span>
+          </div>
+          <div id="invOut" class="success" style="display:none;"></div>
+        </div>
+
+        <div class="section-title">Calculadora Gol Time (1er tiempo)</div>
+        <div class="card">
+          <div class="row">
+            <div>
+              <label>Cuota “+0.5 goles 1er tiempo”</label>
+              <input type="number" id="cuota05HT" value="1.25" step="0.01" />
+            </div>
+            <div>
+              <label>Ganancia esperada por apuesta</label>
+              <input type="number" id="gananciaEsperada" value="50" step="0.01" />
+            </div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div>
+              <label>Inversión por apuesta</label>
+              <input type="number" id="inversionHT" value="30" step="0.01" />
+            </div>
+            <div>
+              <label>Cuota “Anota primer gol (1er tiempo)”</label>
+              <input type="number" id="cuotaAnotaHT" value="3.3" step="0.01" />
+            </div>
+          </div>
+          <div style="margin-top:8px; display:flex; gap:8px;">
+            <button class="warn" id="calcGolTimeBtn">Calcular Gol Time</button>
+            <span class="small">Basado en “C. GOL TIME”.</span>
+          </div>
+          <div id="golTimeOut" class="success" style="display:none;"></div>
+        </div>
+
+        <div class="section-title" style="margin-top:12px;">Tarjetas y árbitros</div>
+        <div class="card">
+          <div class="links" id="tarjetasLinks"></div>
+          <p class="small">Enlaces incluidos en “LIGAS TARJETAS”.</p>
+        </div>
+
+        <div class="section-title" style="margin-top:12px;">Ligas (Half time, BTTS/Over, Corners, 1X2, Timing)</div>
+        <div class="card">
+          <div class="links" id="ligasLinks"></div>
+          <p class="small">Lista extensa de ligas y endpoints de SoccerSTATS del archivo.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ===============================
+    // Datos del archivo (estructurados)
+    // ===============================
+
+    // Liga principal en el bloque inicial
+    const MAIN_LEAGUE = "Saudi Arabia - Professional League";
+
+    // Equipos del ejemplo de partido
+    const TEAMS_SA = [
+      { id: "AHL", name: "Al Ahli Jeddah" },
+      { id: "QAD", name: "Al Quadisiya" }
+    ];
+
+    // Valores numéricos detectados en “Copia de TABLA RESULTADOS”
+    // Nota: El archivo incluye: GF L 5.03, GF V 6.43, GC L 5.83, GC V 4.56, además hay 4.21, 5.5, 5.0, 3.43 que parecen posiciones/otros campos,
+    // conservamos los cuatro identificados como GF/GC y tomamos promedios de liga tentativos desde el bloque (puedes ajustar luego).
+    const TABLE_RESULT_VALUES = {
+      gfL: 5.03,
+      gfV: 6.43,
+      gcL: 5.83,
+      gcV: 4.56,
+      promLigaL: 4.21, // tomado del mismo bloque (para mostrar referencia)
+      promLigaV: 5.5   // tomado del mismo bloque (para mostrar referencia)
+    };
+
+    // Corners (líneas) presentes como etiquetas: Over 8.5, Over 9.5, Over 10.5.
+    // El archivo no trae porcentajes, así que dejamos placeholders calculables o por completar.
+    // Si deseas, luego puedes conectar a tus cálculos.
+    const CORNERS_LINES = {
+      over85: "N/D",
+      over95: "N/D",
+      over105: "N/D",
+      cornersLocal: "N/D",
+      cornersVisitante: "N/D"
+    };
+
+    // Goles esperados y probabilidades Over/Under (etiquetas presentes)
+    const GOALS_BLOCK = {
+      xgLocal: "N/D",
+      xgVisitante: "N/D",
+      over: { "0.5": "N/D", "1.5": "N/D", "2.5": "N/D", "3.5": "N/D" },
+      under:{ "0.5": "N/D", "1.5": "N/D", "2.5": "N/D", "3.5": "N/D" },
+      btts: "N/D"
+    };
+
+    // 1X2 y doble oportunidad (etiquetas presentes)
+    const ONE_X_TWO_BLOCK = {
+      pWinLocal: "N/D",
+      pDraw: "N/D",
+      pWinVisitante: "N/D",
+      p1X: "N/D",
+      oddsRef: "N/D"
+    };
+
+    // Descanso/final y tiempos (Half-time)
+    const HALF_TIME_BLOCK = {
+      localHT: "N/D",
+      visitanteHT: "N/D",
+      golesDescanso: "N/D",
+      firstHalfStat: "N/D"
+    };
+
+    // Enlaces de tarjetas y árbitros (del bloque LIGAS TARJETAS)
+    const TARJETAS_SOURCES = [
+      { league: "Inglaterra – Premier League", tarjetas: "https://www.espn.com.co/futbol/estadisticas/_/liga/ENG.1/vista/tarjetas", arbitros: "https://www.soccerbase.com/referees/home.sd?comp_id=1" },
+      { league: "Italia – Serie A", tarjetas: "https://www.espn.com.co/futbol/estadisticas/_/liga/ITA.1/vista/tarjetas", arbitros: "https://www.soccerbase.com/referees/home.sd?comp_id=19" },
+      { league: "Alemania – Bundesliga", tarjetas: "https://www.espn.com.co/futbol/estadisticas/_/liga/GER.1/vista/tarjetas", arbitros: "https://www.soccerbase.com/referees/home.sd?comp_id=20" },
+      { league: "Francia – Ligue 1", tarjetas: "https://www.espn.com.co/futbol/estadisticas/_/liga/FRA.1/vista/tarjetas", arbitros: "https://www.soccerbase.com/referees/home.sd?comp_id=22" },
+      { league: "Escocia – Premiership", tarjetas: "https://espndeportes.espn.com/futbol/estadisticas/_/liga/SCO.1/vista/tarjetas", arbitros: "https://www.soccerbase.com/referees/home.sd?comp_id=12" },
+      { league: "EEUU – MLS", tarjetas: "https://www.statbunker.com/competitions/ClubBookings?comp_id=684", arbitros: "" },
+      { league: "Inglaterra – Championship", tarjetas: "https://www.espn.com.ar/futbol/estadisticas/_/liga/ENG.2/vista/tarjetas", arbitros: "https://www.soccerbase.com/referees/home.sd?comp_id=2" },
+      { league: "México – Liga MX", tarjetas: "https://www.espn.com.co/futbol/estadisticas/_/liga/MEX.1/vista/tarjetas", arbitros: "https://www.soccerbase.com/referees/home.sd?comp_id=432" },
+      { league: "Colombia – Primera A", tarjetas: "https://www.espn.com.co/futbol/estadisticas/_/liga/COL.1/vista/tarjetas", arbitros: "https://www.soccerbase.com/referees/home.sd?comp_id=421" },
+      { league: "España – LaLiga", tarjetas: "https://www.espn.com.co/futbol/estadisticas/_/liga/ESP.1/vista/tarjetas", arbitros: "https://www.soccerbase.com/referees/home.sd?comp_id=21" },
+      { league: "Bélgica – Pro League", tarjetas: "https://www.espn.com.co/futbol/estadisticas/_/liga/BEL.1/vista/tarjetas", arbitros: "https://www.soccerbase.com/referees/home.sd?comp_id=25" },
+    ];
+
+    // Enlaces de SoccerSTATS para muchas ligas (del bloque LIGAS): guardamos un subconjunto representativo
+    const LIGAS_LINKS = [
+      { liga: "Saudi Arabia – Professional League", half: "https://www.soccerstats.com/halftime.asp?league=saudiarabia", trends: "https://www.soccerstats.com/trends.asp?league=saudiarabia", corners: "https://www.soccerstats.com/table.asp?league=saudiarabia&tid=cr", homeaway: "https://www.soccerstats.com/homeaway.asp?league=saudiarabia", timing: "https://www.soccerstats.com/timing.asp?league=saudiarabia" },
+      { liga: "England – Premier League", half: "https://www.soccerstats.com/halftime.asp?league=england", trends: "https://www.soccerstats.com/trends.asp?league=england", corners: "https://www.soccerstats.com/table.asp?league=england&tid=cr", homeaway: "https://www.soccerstats.com/homeaway.asp?league=england", timing: "https://www.soccerstats.com/timing.asp?league=england" },
+      { liga: "Spain – LaLiga", half: "https://www.soccerstats.com/halftime.asp?league=spain", trends: "https://www.soccerstats.com/trends.asp?league=spain", corners: "https://www.soccerstats.com/table.asp?league=spain&tid=cr", homeaway: "https://www.soccerstats.com/homeaway.asp?league=spain", timing: "https://www.soccerstats.com/timing.asp?league=spain" },
+      { liga: "Italy – Serie A", half: "https://www.soccerstats.com/halftime.asp?league=italy", trends: "https://www.soccerstats.com/trends.asp?league=italy", corners: "https://www.soccerstats.com/table.asp?league=italy&tid=cr", homeaway: "https://www.soccerstats.com/homeaway.asp?league=italy", timing: "https://www.soccerstats.com/timing.asp?league=italy" },
+      { liga: "Germany – Bundesliga", half: "https://www.soccerstats.com/halftime.asp?league=germany", trends: "https://www.soccerstats.com/trends.asp?league=germany", corners: "https://www.soccerstats.com/table.asp?league=germany&tid=cr", homeaway: "https://www.soccerstats.com/homeaway.asp?league=germany", timing: "https://www.soccerstats.com/timing.asp?league=germany" },
+      { liga: "France – Ligue 1", half: "https://www.soccerstats.com/halftime.asp?league=france", trends: "https://www.soccerstats.com/trends.asp?league=france", corners: "https://www.soccerstats.com/table.asp?league=france&tid=cr", homeaway: "https://www.soccerstats.com/homeaway.asp?league=france", timing: "https://www.soccerstats.com/timing.asp?league=france" },
+      { liga: "USA – MLS", half: "https://www.soccerstats.com/halftime.asp?league=usa", trends: "https://www.soccerstats.com/trends.asp?league=usa", corners: "https://www.soccerstats.com/table.asp?league=usa&tid=cr", homeaway: "https://www.soccerstats.com/homeaway.asp?league=usa", timing: "https://www.soccerstats.com/timing.asp?league=usa" },
+    ];
+
+    // ===============================
+    // UI y render
+    // ===============================
+    const $ = (sel) => document.querySelector(sel);
+
+    const leagueSel = $("#leagueSel");
+    const homeSel   = $("#homeSel");
+    const awaySel   = $("#awaySel");
+    const loadBtn   = $("#loadBtn");
+    const swapBtn   = $("#swapBtn");
+    const msgEl     = $("#msg");
+
+    const homeName  = $("#homeName");
+    const awayName  = $("#awayName");
+    const leagueName = $("#leagueName");
+    const leagueName2 = $("#leagueName2");
+    const homeMetrics = $("#homeMetrics");
+    const awayMetrics = $("#awayMetrics");
+
+    const corn85 = $("#corn85");
+    const corn95 = $("#corn95");
+    const corn105 = $("#corn105");
+    const cornL = $("#cornL");
+    const cornV = $("#cornV");
+
+    const xgL = $("#xgL");
+    const xgV = $("#xgV");
+    const ov05 = $("#ov05"), ov15 = $("#ov15"), ov25 = $("#ov25"), ov35 = $("#ov35");
+    const un05 = $("#un05"), un15 = $("#un15"), un25 = $("#un25"), un35 = $("#un35");
+    const btts = $("#btts");
+
+    const pWinL = $("#pWinL"), pDraw = $("#pDraw"), pWinV = $("#pWinV"), p1X = $("#p1X"), oddsRef = $("#oddsRef");
+    const htL = $("#htL"), htV = $("#htV"), gDesc = $("#gDesc"), firstHalfStat = $("#firstHalfStat");
+
+    const gfL = $("#gfL"), gfV = $("#gfV"), gcL = $("#gcL"), gcV = $("#gcV"), plL = $("#plL"), plV = $("#plV");
+
+    const metaGanar = $("#metaGanar");
+    const cuotaA = $("#cuotaA");
+    const cuotaB = $("#cuotaB");
+    const estimadoA = $("#estimadoA");
+    const calcInvBtn = $("#calcInvBtn");
+    const invOut = $("#invOut");
+
+    const cuota05HT = $("#cuota05HT");
+    const gananciaEsperada = $("#gananciaEsperada");
+    const inversionHT = $("#inversionHT");
+    const cuotaAnotaHT = $("#cuotaAnotaHT");
+    const calcGolTimeBtn = $("#calcGolTimeBtn");
+    const golTimeOut = $("#golTimeOut");
+
+    const tarjetasLinks = $("#tarjetasLinks");
+    const ligasLinks = $("#ligasLinks");
+
+    function populateLeague() {
+      leagueSel.innerHTML = `<option value="">Selecciona liga</option>`;
+      leagueSel.innerHTML += `<option value="saudi">${MAIN_LEAGUE}</option>`;
+      // Puedes añadir más ligas y equipos si luego expandes la estructura
+    }
+
+    function populateTeams(leagueCode) {
+      if (leagueCode === "saudi") {
+        const opts = [`<option value="">Selecciona equipo</option>`, ...TEAMS_SA.map(t => `<option value="${t.id}">${t.name}</option>`)].join("");
+        homeSel.innerHTML = opts;
+        awaySel.innerHTML = opts;
+      } else {
+        homeSel.innerHTML = `<option value="">Selecciona equipo</option>`;
+        awaySel.innerHTML = `<option value="">Selecciona equipo</option>`;
+      }
+      loadBtn.disabled = true;
+      msgEl.style.display = "none";
+    }
+
+    function validate() {
+      const valid = leagueSel.value && homeSel.value && awaySel.value && homeSel.value !== awaySel.value;
+      loadBtn.disabled = !valid;
+      msgEl.style.display = valid ? "none" : "block";
+      msgEl.textContent = valid ? "" : (homeSel.value === awaySel.value ? "Selecciona equipos distintos." : "Completa todos los campos.");
+    }
+
+    function renderTeamCard(side, teamId) {
+      const team = TEAMS_SA.find(t => t.id === teamId);
+      const nameEl = side === "home" ? homeName : awayName;
+      const metricsEl = side === "home" ? homeMetrics : awayMetrics;
+      const leagueEl = side === "home" ? leagueName : leagueName2;
+
+      nameEl.textContent = team?.name || "Equipo";
+      leagueEl.textContent = MAIN_LEAGUE;
+
+      // Métricas base: tomamos GF/GC del bloque de tabla, distribuyendo por equipo de forma ilustrativa
+      const isHome = side === "home";
+      const baseGF = isHome ? TABLE_RESULT_VALUES.gfL : TABLE_RESULT_VALUES.gfV;
+      const baseGC = isHome ? TABLE_RESULT_VALUES.gcL : TABLE_RESULT_VALUES.gcV;
+
+      const metrics = [
+        { label: "Goles a favor (tabla)", value: baseGF },
+        { label: "Goles en contra (tabla)", value: baseGC },
+        { label: "Promedio liga referencia", value: isHome ? TABLE_RESULT_VALUES.promLigaL : TABLE_RESULT_VALUES.promLigaV },
+      ];
+
+      metricsEl.innerHTML = metrics.map(m => `
+        <div class="metric">
+          <div class="metric-label">${m.label}</div>
+          <div class="metric-value">${m.value ?? "–"}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderBlocks() {
+      // Corners
+      corn85.textContent = CORNERS_LINES.over85;
+      corn95.textContent = CORNERS_LINES.over95;
+      corn105.textContent = CORNERS_LINES.over105;
+      cornL.textContent = CORNERS_LINES.cornersLocal;
+      cornV.textContent = CORNERS_LINES.cornersVisitante;
+
+      // Goles y Over/Under
+      xgL.textContent = GOALS_BLOCK.xgLocal;
+      xgV.textContent = GOALS_BLOCK.xgVisitante;
+      ov05.textContent = GOALS_BLOCK.over["0.5"];
+      ov15.textContent = GOALS_BLOCK.over["1.5"];
+      ov25.textContent = GOALS_BLOCK.over["2.5"];
+      ov35.textContent = GOALS_BLOCK.over["3.5"];
+      un05.textContent = GOALS_BLOCK.under["0.5"];
+      un15.textContent = GOALS_BLOCK.under["1.5"];
+      un25.textContent = GOALS_BLOCK.under["2.5"];
+      un35.textContent = GOALS_BLOCK.under["3.5"];
+      btts.textContent = GOALS_BLOCK.btts;
+
+      // 1X2 / Doble oportunidad
+      pWinL.textContent = ONE_X_TWO_BLOCK.pWinLocal;
+      pDraw.textContent = ONE_X_TWO_BLOCK.pDraw;
+      pWinV.textContent = ONE_X_TWO_BLOCK.pWinVisitante;
+      p1X.textContent = ONE_X_TWO_BLOCK.p1X;
+      oddsRef.textContent = ONE_X_TWO_BLOCK.oddsRef;
+
+      // Half time
+      htL.textContent = HALF_TIME_BLOCK.localHT;
+      htV.textContent = HALF_TIME_BLOCK.visitanteHT;
+      gDesc.textContent = HALF_TIME_BLOCK.golesDescanso;
+      firstHalfStat.textContent = HALF_TIME_BLOCK.firstHalfStat;
+
+      // Tabla resultados (del archivo)
+      gfL.textContent = TABLE_RESULT_VALUES.gfL;
+      gfV.textContent = TABLE_RESULT_VALUES.gfV;
+      gcL.textContent = TABLE_RESULT_VALUES.gcL;
+      gcV.textContent = TABLE_RESULT_VALUES.gcV;
+      plL.textContent = TABLE_RESULT_VALUES.promLigaL;
+      plV.textContent = TABLE_RESULT_VALUES.promLigaV;
+    }
+
+    function loadMatch() {
+      renderTeamCard("home", homeSel.value);
+      renderTeamCard("away", awaySel.value);
+      renderBlocks();
+    }
+
+    function swapTeams() {
+      const h = homeSel.value;
+      const a = awaySel.value;
+      if (!h || !a) return;
+      homeSel.value = a;
+      awaySel.value = h;
+      validate();
+      loadMatch();
+    }
+
+    function renderTarjetasLinks() {
+      tarjetasLinks.innerHTML = TARJETAS_SOURCES.map(s => `
+        <div>
+          <strong>${s.league}:</strong>
+          <a href="${s.tarjetas}" target="_blank">Tarjetas</a>
+          ${s.arbitros ? ` · <a href="${s.arbitros}" target="_blank">Árbitros</a>` : ""}
+        </div>
+      `).join("");
+    }
+
+    function renderLigasLinks() {
+      ligasLinks.innerHTML = LIGAS_LINKS.map(s => `
+        <div>
+          <strong>${s.liga}:</strong>
+          <a href="${s.half}" target="_blank">Half time</a> ·
+          <a href="${s.trends}" target="_blank">BTTS/Over (trends)</a> ·
+          <a href="${s.corners}" target="_blank">Corners</a> ·
+          <a href="${s.homeaway}" target="_blank">Home/Away</a> ·
+          <a href="${s.timing}" target="_blank">Timing</a>
+        </div>
+      `).join("");
+    }
+
+    // ===============================
+    // Calculadoras
+    // ===============================
+
+    // Calculadora de inversión – ejemplo simple:
+    // Apuesta necesaria para alcanzar meta en selección A y B, y total.
+    calcInvBtn.addEventListener("click", () => {
+      const meta = Number(metaGanar.value || 0);
+      const oddA = Number(cuotaA.value || 0);
+      const oddB = Number(cuotaB.value || 0);
+      const estA = Number(estimadoA.value || 0) / 100;
+      const estB = 1 - estA;
+
+      if (meta <= 0 || oddA <= 1 || oddB <= 1) {
+        invOut.style.display = "block";
+        invOut.className = "error";
+        invOut.textContent = "Verifica meta y cuotas (>1).";
+        return;
+      }
+
+      // Monto para que retorno neto aprox. sea meta si acierta A/B
+      const invA = meta / (oddA - 1);
+      const invB = meta / (oddB - 1);
+      const total = invA + invB;
+      const ev = estA * (invA * (oddA - 1) - invB) + estB * (invB * (oddB - 1) - invA);
+
+      invOut.style.display = "block";
+      invOut.className = "success";
+      invOut.textContent = `Inversión A: ${invA.toFixed(2)} · Inversión B: ${invB.toFixed(2)} · Total: ${total.toFixed(2)} · Valor esperado: ${ev.toFixed(2)}`;
+    });
+
+    // Calculadora Gol Time – retorno y neto esperados
+    calcGolTimeBtn.addEventListener("click", () => {
+      const odd05 = Number(cuota05HT.value || 0);
+      const ganEsp = Number(gananciaEsperada.value || 0);
+      const inv = Number(inversionHT.value || 0);
+      const oddAnota = Number(cuotaAnotaHT.value || 0);
+
+      if (odd05 <= 1 || inv <= 0) {
+        golTimeOut.style.display = "block";
+        golTimeOut.className = "error";
+        golTimeOut.textContent = "Verifica cuota (>1) e inversión (>0).";
+        return;
+      }
+
+      const retorno05 = inv * odd05;
+      const neta05 = retorno05 - inv;
+      const retornoAnota = inv * oddAnota;
+      const netaAnota = retornoAnota - inv;
+
+      golTimeOut.style.display = "block";
+      golTimeOut.className = "success";
+      golTimeOut.textContent = `+0.5 HT: retorno ${retorno05.toFixed(2)}, neta ${neta05.toFixed(2)} · Anota 1er gol HT: retorno ${retornoAnota.toFixed(2)}, neta ${netaAnota.toFixed(2)} · Ganancia esperada objetivo: ${ganEsp.toFixed(2)}`;
+    });
+
+    // ===============================
+    // Eventos e init
+    // ===============================
+    leagueSel.addEventListener("change", () => { populateTeams(leagueSel.value); validate(); });
+    homeSel.addEventListener("change", validate);
+    awaySel.addEventListener("change", validate);
+    loadBtn.addEventListener("click", loadMatch);
+    swapBtn.addEventListener("click", swapTeams);
+
+    function init() {
+      populateLeague();
+      renderTarjetasLinks();
+      renderLigasLinks();
+    }
+    init();
+  </script>
+</body>
+</html>
